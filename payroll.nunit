@@ -1,0 +1,9 @@
+﻿<NUnitProject>
+  <Settings activeconfig="Debug" />
+  <Config name="Debug" binpathtype="Auto">
+    <assembly path="Payroll\bin\Debug\Payroll.dll" />
+    <assembly path="PayrollDB\bin\Debug\PayrollDB.dll" />
+    <assembly path="PayrollUI\bin\Debug\PayrollUI.exe" />
+  </Config>
+  <Config name="Release" binpathtype="Auto" />
+</NUnitProject>

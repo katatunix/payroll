@@ -1,0 +1,1903 @@
+using System;
+
+namespace Payroll
+{
+	public class AddCommissionedEmployee : AddEmployeeTransaction
+	{
+		private readonly double commissionRate;
+		private readonly double baseRate;
+
+		public AddCommissionedEmployee(int id, string name, 
+			string address, double baseRate, double commissionRate)
+			: base(id, name, address)
+		{
+			this.baseRate = baseRate;
+			this.commissionRate = commissionRate;
+		}
+
+		protected override PaymentClassification MakeClassification()
+		{
+			return new CommissionClassification(baseRate, commissionRate);
+		}
+
+		protected override PaymentSchedule MakeSchedule()
+		{
+			return new BiWeeklySchedule();
+		}
+	}
+}namespace Payroll
+{
+	public abstract class AddEmployeeTransaction : Transaction
+	{
+		private readonly int empid;
+		private readonly string name;
+		private readonly string address;
+
+		public AddEmployeeTransaction(int empid, 
+			string name, string address)
+		{
+			this.empid = empid;
+			this.name = name;
+			this.address = address;
+		}
+
+		protected abstract 
+			PaymentClassification MakeClassification();
+		protected abstract 
+			PaymentSchedule MakeSchedule();
+
+		public void Execute()
+		{
+			PaymentClassification pc = MakeClassification();
+			PaymentSchedule ps = MakeSchedule();
+			PaymentMethod pm = new HoldMethod();
+
+			Employee e = new Employee(empid, name, address);
+			e.Classification = pc;
+			e.Schedule = ps;
+			e.Method = pm;
+			PayrollDatabase.AddEmployee(empid, e);
+		}
+	}
+}using System;
+
+namespace Payroll
+{
+	public class AddHourlyEmployee : AddEmployeeTransaction
+	{
+		private readonly double hourlyRate;
+
+		public AddHourlyEmployee(int id, string name, 
+			string address, double hourlyRate)
+			: base(id, name, address)
+		{
+			this.hourlyRate = hourlyRate;
+
+		}
+
+		protected override 
+			PaymentClassification MakeClassification()
+		{
+			return new HourlyClassification(hourlyRate);
+		}
+
+		protected override PaymentSchedule MakeSchedule()
+		{
+			return new WeeklySchedule();
+		}
+	}
+}namespace Payroll
+{
+	public class AddSalariedEmployee : AddEmployeeTransaction
+	{
+		private readonly double salary;
+
+		public AddSalariedEmployee(int id, string name,
+			string address, double salary) 
+			: base(id, name, address)
+		{
+			this.salary = salary;
+		}
+
+		protected override 
+			PaymentClassification MakeClassification()
+		{
+			return new SalariedClassification(salary);
+		}
+
+		protected override PaymentSchedule MakeSchedule()
+		{
+			return new MonthlySchedule();
+		}
+	}
+}namespace Payroll
+{
+	public interface Affiliation
+	{
+		double CalculateDeductions(Paycheck paycheck);
+	}
+}using System.Reflection;
+using System.Runtime.CompilerServices;
+
+//
+// General Information about an assembly is controlled through the following 
+// set of attributes. Change these attribute values to modify the information
+// associated with an assembly.
+//
+[assembly: AssemblyTitle("")]
+[assembly: AssemblyDescription("")]
+[assembly: AssemblyConfiguration("")]
+[assembly: AssemblyCompany("")]
+[assembly: AssemblyProduct("")]
+[assembly: AssemblyCopyright("")]
+[assembly: AssemblyTrademark("")]
+[assembly: AssemblyCulture("")]		
+
+//
+// Version information for an assembly consists of the following four values:
+//
+//      Major Version
+//      Minor Version 
+//      Build Number
+//      Revision
+//
+// You can specify all the values or you can default the Revision and Build Numbers 
+// by using the '*' as shown below:
+
+[assembly: AssemblyVersion("1.0.*")]
+
+//
+// In order to sign your assembly you must specify a key to use. Refer to the 
+// Microsoft .NET Framework documentation for more information on assembly signing.
+//
+// Use the attributes below to control which key is used for signing. 
+//
+// Notes: 
+//   (*) If no key is specified, the assembly is not signed.
+//   (*) KeyName refers to a key that has been installed in the Crypto Service
+//       Provider (CSP) on your machine. KeyFile refers to a file which contains
+//       a key.
+//   (*) If the KeyFile and the KeyName values are both specified, the 
+//       following processing occurs:
+//       (1) If the KeyName can be found in the CSP, that key is used.
+//       (2) If the KeyName does not exist and the KeyFile does exist, the key 
+//           in the KeyFile is installed into the CSP and used.
+//   (*) In order to create a KeyFile, you can use the sn.exe (Strong Name) utility.
+//       When specifying the KeyFile, the location of the KeyFile should be
+//       relative to the project output directory which is
+//       %Project Directory%\obj\<configuration>. For example, if your KeyFile is
+//       located in the project directory, you would specify the AssemblyKeyFile 
+//       attribute as [assembly: AssemblyKeyFile("..\\..\\mykey.snk")]
+//   (*) Delay Signing is an advanced option - see the Microsoft .NET Framework
+//       documentation for more information on this.
+//
+[assembly: AssemblyDelaySign(false)]
+[assembly: AssemblyKeyFile("")]
+[assembly: AssemblyKeyName("")]
+using System;
+
+namespace Payroll
+{
+	public class BiWeeklySchedule : PaymentSchedule
+	{
+		public bool IsPayDate(DateTime payDate)
+		{
+			return payDate.DayOfWeek == DayOfWeek.Friday &&
+				payDate.Day % 2 == 0;
+		}
+
+		public DateTime GetPayPeriodStartDate(DateTime date)
+		{
+			return date.AddDays(-13);
+		}
+
+	}
+}namespace Payroll
+{
+	public abstract class ChangeAffiliationTransaction : ChangeEmployeeTransaction
+	{
+		public ChangeAffiliationTransaction(int empId)
+			: base(empId)
+		{}
+
+		protected override void Change(Employee e)
+		{
+			RecordMembership(e);
+			Affiliation affiliation = Affiliation;
+			e.Affiliation = affiliation;
+		}
+
+		protected abstract Affiliation Affiliation { get; }
+		protected abstract void RecordMembership(Employee e);
+	}
+}namespace Payroll
+{
+	public abstract class ChangeClassificationTransaction
+		: ChangeEmployeeTransaction
+	{
+		public ChangeClassificationTransaction(int id)
+			: base (id)
+		{}
+
+		protected override void Change(Employee e)
+		{
+			e.Classification = Classification;
+			e.Schedule = Schedule;
+		}
+
+		protected abstract 
+			PaymentClassification Classification { get; }
+		protected abstract PaymentSchedule Schedule { get; }
+	}
+}namespace Payroll
+{
+	public class ChangeCommissionedTransaction
+		: ChangeClassificationTransaction
+	{
+		private readonly double baseSalary;
+		private readonly double commissionRate;
+
+		public ChangeCommissionedTransaction(int id, double baseSalary, double commissionRate)
+			: base(id)
+		{
+			this.baseSalary = baseSalary;
+			this.commissionRate = commissionRate;
+		}
+
+		protected override PaymentClassification Classification
+		{
+			get { return new CommissionClassification(baseSalary, commissionRate); }
+		}
+
+		protected override PaymentSchedule Schedule
+		{
+			get { return new BiWeeklySchedule(); }
+		}
+	}
+}using System;
+
+namespace Payroll
+{
+	public class ChangeDirectTransaction : ChangeMethodTransaction
+	{
+		public ChangeDirectTransaction(int empId)
+			: base (empId)
+		{
+		}
+
+		protected override PaymentMethod Method
+		{
+			get { return new DirectDepositMethod(); }
+		}
+
+	}
+}using System;
+
+namespace Payroll
+{
+	public abstract class ChangeEmployeeTransaction : Transaction
+	{
+		private readonly int empId;
+
+		public ChangeEmployeeTransaction(int empId)
+		{
+			this.empId = empId;
+		}
+
+		public void Execute()
+		{
+			Employee e = PayrollDatabase.GetEmployee(empId);
+			
+			if(e != null)
+				Change(e);
+			else
+				throw new ApplicationException(
+					"No such employee.");
+		}
+
+		protected abstract void Change(Employee e);
+	}
+}using System;
+
+namespace Payroll
+{
+	public class ChangeHoldTransaction : ChangeMethodTransaction
+	{
+		public ChangeHoldTransaction(int empId)
+			: base(empId)
+		{
+		}
+
+		protected override PaymentMethod Method
+		{
+			get { return new HoldMethod(); }
+		}
+
+	}
+}namespace Payroll
+{
+	public class ChangeHourlyTransaction 
+		: ChangeClassificationTransaction
+	{
+		private readonly double hourlyRate;
+
+		public ChangeHourlyTransaction(int id, double hourlyRate)
+			: base(id)
+		{
+			this.hourlyRate = hourlyRate;
+		}
+
+		protected override PaymentClassification Classification
+		{
+			get { return new HourlyClassification(hourlyRate); }
+		}
+
+		protected override PaymentSchedule Schedule
+		{
+			get { return new WeeklySchedule(); }
+		}
+	}
+}using System;
+
+namespace Payroll
+{
+	public class ChangeMailTransaction : ChangeMethodTransaction
+	{
+		public ChangeMailTransaction(int empId)
+			: base(empId)
+		{
+		}
+
+		protected override PaymentMethod Method
+		{
+			get { return new MailMethod(); }
+		}
+
+	}
+}namespace Payroll
+{
+	public class ChangeMemberTransaction : ChangeAffiliationTransaction
+	{
+		private readonly int memberId;
+		private readonly double dues;
+
+		public ChangeMemberTransaction(
+			int empId, int memberId, double dues)
+			: base(empId)
+		{
+			this.memberId = memberId;
+			this.dues = dues;
+		}
+
+		protected override Affiliation Affiliation
+		{
+			get { return new UnionAffiliation(memberId, dues); }
+		}
+
+		protected override void RecordMembership(Employee e)
+		{
+			PayrollDatabase.AddUnionMember(memberId, e);
+		}
+	}
+}namespace Payroll
+{
+	public abstract class ChangeMethodTransaction : ChangeEmployeeTransaction
+	{
+		public ChangeMethodTransaction(int empId)
+			: base(empId)
+		{}
+
+		protected override void Change(Employee e)
+		{
+			PaymentMethod method = Method;
+			e.Method = method;
+		}
+
+		protected abstract PaymentMethod Method { get; }
+	}
+}namespace Payroll
+{
+	public class ChangeNameTransaction 
+		: ChangeEmployeeTransaction
+	{
+		private readonly string newName;
+
+		public ChangeNameTransaction(int id, string newName)
+			: base(id)
+		{
+			this.newName = newName;
+		}
+
+		protected override void Change(Employee e)
+		{
+			e.Name = newName;
+		}
+	}
+}namespace Payroll
+{
+	public class ChangeSalariedTransaction : ChangeClassificationTransaction
+	{
+		private readonly double salary;
+
+		public ChangeSalariedTransaction(int id, double salary)
+			: base(id)
+		{
+			this.salary = salary;
+		}
+
+		protected override PaymentClassification Classification
+		{
+			get { return new SalariedClassification(salary); }
+		}
+
+		protected override PaymentSchedule Schedule
+		{
+			get { return new MonthlySchedule(); }
+		}
+	}
+}namespace Payroll
+{
+	public class ChangeUnaffiliatedTransaction : ChangeAffiliationTransaction
+	{
+		public ChangeUnaffiliatedTransaction(int empId)
+			: base(empId)
+		{}
+
+		protected override Affiliation Affiliation
+		{
+			get { return new NoAffiliation(); }
+		}
+
+		protected override void RecordMembership(Employee e)
+		{
+			Affiliation affiliation = e.Affiliation;
+			if(affiliation is UnionAffiliation)
+			{
+				UnionAffiliation unionAffiliation = 
+					affiliation as UnionAffiliation;
+				int memberId = unionAffiliation.MemberId;
+				PayrollDatabase.RemoveUnionMember(memberId);
+			}
+		}
+	}
+}using System;
+using System.Collections;
+
+namespace Payroll
+{
+	public class CommissionClassification : PaymentClassification
+	{
+		private readonly double baseRate;
+		private readonly double commissionRate;
+		private Hashtable salesReceipts = new Hashtable();
+
+		public CommissionClassification(double baseRate, double commissionRate)
+		{
+			this.baseRate = baseRate;
+			this.commissionRate = commissionRate;
+		}
+
+		public double BaseRate
+		{
+			get { return baseRate; }
+		}
+
+		public double CommissionRate
+		{
+			get { return commissionRate; }
+		}
+
+		public void AddSalesReceipt(SalesReceipt receipt)
+		{
+			salesReceipts[receipt.Date] = receipt;
+		}
+
+		public SalesReceipt GetSalesReceipt(DateTime time)
+		{
+			return salesReceipts[time] as SalesReceipt;
+		}
+
+		public override double CalculatePay(Paycheck paycheck)
+		{
+			double salesTotal = 0;
+			foreach(SalesReceipt receipt in salesReceipts.Values)
+			{
+				if(DateUtil.IsInPayPeriod(receipt.Date, 
+					paycheck.PayPeriodStartDate, 
+					paycheck.PayPeriodEndDate))
+					salesTotal += receipt.SaleAmount;
+			}
+			return baseRate + (salesTotal * commissionRate * 0.01);
+		}
+	}
+}using System;
+
+namespace Payroll
+{
+	public class DateUtil
+	{
+		public static bool IsInPayPeriod(
+			DateTime theDate, DateTime startDate, DateTime endDate)
+		{
+			return (theDate >= startDate) && (theDate <= endDate);
+		}
+	}
+}namespace Payroll
+{
+	public class DeleteEmployeeTransaction : Transaction
+	{
+		private readonly int id;
+
+		public DeleteEmployeeTransaction(int id)
+		{
+			this.id = id;
+		}
+
+		public void Execute()
+		{
+			PayrollDatabase.DeleteEmployee(id);
+		}
+	}
+}using System;
+
+namespace Payroll
+{
+	public class DirectDepositMethod : PaymentMethod
+	{
+		public void Pay(Paycheck paycheck)
+		{
+			paycheck.SetField("Disposition", "Direct");
+		}
+	}
+}using System;
+
+namespace Payroll
+{
+	public class Employee
+	{
+		private readonly int empid;
+		private string name;
+		private readonly string address;
+		private PaymentClassification classification;
+		private PaymentSchedule schedule;
+		private PaymentMethod method;
+		private Affiliation affiliation = new NoAffiliation();
+
+		public Employee(int empid, string name, string address)
+		{
+			this.empid = empid;
+			this.name = name;
+			this.address = address;
+		}
+
+		public string Name
+		{
+			get { return name; }
+			set { name = value; }
+		}
+
+		public string Address
+		{
+			get { return address; }
+		}
+
+		public PaymentClassification Classification
+		{
+			get { return classification; }
+			set { classification = value; }
+		}
+
+		public PaymentSchedule Schedule
+		{
+			get { return schedule; }
+			set { schedule = value; }
+		}
+
+		public PaymentMethod Method
+		{
+			get { return method; }
+			set { method = value; }
+		}
+
+		public Affiliation Affiliation
+		{
+			get { return affiliation; }
+			set { affiliation = value; }
+		}
+
+		public bool IsPayDate(DateTime date)
+		{
+			return schedule.IsPayDate(date);
+		}
+
+		public void Payday(Paycheck paycheck)
+		{
+			double grossPay = classification.CalculatePay(paycheck);
+			double deductions = affiliation.CalculateDeductions(paycheck);
+			double netPay = grossPay - deductions;
+			paycheck.GrossPay = grossPay;
+			paycheck.Deductions = deductions;
+			paycheck.NetPay = netPay;
+			method.Pay(paycheck);
+		}
+
+		public DateTime GetPayPeriodStartDate(DateTime date)
+		{
+			return schedule.GetPayPeriodStartDate(date);
+		}
+	}
+}using System;
+
+namespace Payroll
+{
+	public class HoldMethod : PaymentMethod
+	{
+		public void Pay(Paycheck paycheck)
+		{
+			paycheck.SetField("Disposition", "Hold");
+		}
+	}
+}using System;
+using System.Collections;
+
+namespace Payroll
+{
+	public class HourlyClassification : PaymentClassification
+	{
+		private double hourlyRate;
+		private Hashtable timeCards = new Hashtable();
+
+		public HourlyClassification(double rate)
+		{
+			this.hourlyRate = rate;
+		}
+
+		public double HourlyRate
+		{
+			get { return hourlyRate; }
+		}
+
+		public TimeCard GetTimeCard(DateTime date)
+		{
+			return timeCards[date] as TimeCard;
+		}
+
+		public void AddTimeCard(TimeCard card)
+		{
+			timeCards[card.Date] = card;
+		}
+
+		public override double CalculatePay(Paycheck paycheck)
+		{
+			double totalPay = 0.0;
+			foreach(TimeCard timeCard in timeCards.Values)
+			{
+				if(DateUtil.IsInPayPeriod(timeCard.Date, 
+					paycheck.PayPeriodStartDate, 
+					paycheck.PayPeriodEndDate))
+					totalPay += CalculatePayForTimeCard(timeCard);
+			}
+			return totalPay;
+		}
+
+		private double CalculatePayForTimeCard(TimeCard card)
+		{
+			double overtimeHours = Math.Max(0.0, card.Hours - 8);
+			double normalHours = card.Hours - overtimeHours;
+			return hourlyRate * normalHours + 
+				hourlyRate * 1.5 * overtimeHours;
+		}
+	}
+}namespace Payroll
+{
+	public class MailMethod : PaymentMethod
+	{
+		public void Pay(Paycheck paycheck)
+		{
+			paycheck.SetField("Disposition", "Mail");
+		}
+	}
+}using System;
+
+namespace Payroll
+{
+	public class MonthlySchedule : PaymentSchedule
+	{
+		private bool IsLastDayOfMonth(DateTime date)
+		{
+			int m1 = date.Month;
+			int m2 = date.AddDays(1).Month;
+			return (m1 != m2);
+		}
+
+		public bool IsPayDate(DateTime payDate)
+		{
+			return IsLastDayOfMonth(payDate);
+		}
+
+		public DateTime GetPayPeriodStartDate(DateTime date)
+		{
+			int days = 0;
+			while(date.AddDays(days - 1).Month == date.Month)
+				days--;
+
+			return date.AddDays(days);
+		}
+
+	}
+}using System;
+
+namespace Payroll
+{
+	public class NoAffiliation : Affiliation
+	{
+		public double CalculateDeductions(Paycheck paycheck)
+		{
+			return 0;
+		}
+	}
+}using System;
+using System.Collections;
+
+namespace Payroll
+{
+	public class Paycheck
+	{
+		private DateTime payDate;
+		private readonly DateTime payPeriodStartDate;
+		private double grossPay;
+		private Hashtable fields = new Hashtable();
+		private double deductions;
+		private double netPay;
+
+		public Paycheck(DateTime payPeriodStartDate, DateTime payDate)
+		{
+			this.payDate = payDate;
+			this.payPeriodStartDate = payPeriodStartDate;
+		}
+
+		public DateTime PayDate
+		{
+			get { return payDate; }
+		}
+
+		public double GrossPay
+		{
+			get { return grossPay; }
+			set { grossPay = value; }
+		}
+
+		public void SetField(string fieldName, string value)
+		{
+			fields[fieldName] = value;
+		}
+
+		public string GetField(string fieldName)
+		{
+			return fields[fieldName] as string;
+		}
+
+		public double Deductions
+		{
+			get { return deductions; }
+			set { deductions = value; }
+		}
+
+		public double NetPay
+		{
+			get { return netPay; }
+			set { netPay = value; }
+		}
+
+		public DateTime PayPeriodEndDate
+		{
+			get { return payDate; }
+		}
+
+		public DateTime PayPeriodStartDate
+		{
+			get { return payPeriodStartDate; }
+		}
+	}
+}using System;
+using System.Collections;
+
+namespace Payroll
+{
+	public class PaydayTransaction : Transaction
+	{
+		private readonly DateTime payDate;
+		private Hashtable paychecks = new Hashtable();
+
+		public PaydayTransaction(DateTime payDate)
+		{
+			this.payDate = payDate;
+		}
+
+		public void Execute()
+		{
+			ArrayList empIds = PayrollDatabase.GetAllEmployeeIds();
+			  
+			foreach(int empId in empIds)
+			{
+				Employee employee = PayrollDatabase.GetEmployee(empId);
+				if (employee.IsPayDate(payDate)) 
+				{
+					DateTime startDate = 
+						employee.GetPayPeriodStartDate(payDate);
+					Paycheck pc = new Paycheck(startDate, payDate);
+					paychecks[empId] = pc;
+					employee.Payday(pc);
+				}
+			}
+		}
+
+		public Paycheck GetPaycheck(int empId)
+		{
+			return paychecks[empId] as Paycheck;
+		}
+	}
+}namespace Payroll
+{
+	public abstract class PaymentClassification
+	{
+		public abstract double CalculatePay(Paycheck paycheck);
+	}
+}namespace Payroll
+{
+	public interface PaymentMethod
+	{
+		void Pay(Paycheck paycheck);
+	}
+}using System;
+
+namespace Payroll
+{
+	public interface PaymentSchedule
+	{
+		bool IsPayDate(DateTime payDate);
+		DateTime GetPayPeriodStartDate(DateTime date);
+	}
+}using System;
+using System.Collections;
+
+namespace Payroll
+{
+	public class PayrollDatabase
+	{
+		private static Hashtable employees = new Hashtable();
+		private static Hashtable unionMembers = new Hashtable();
+
+		public static void AddEmployee(int id, Employee employee)
+		{
+			employees[id] = employee;
+		}
+
+		public static Employee GetEmployee(int id)
+		{
+			return employees[id] as Employee;
+		}
+
+		public static void DeleteEmployee(int id)
+		{
+			employees.Remove(id);
+		}
+
+		public static void AddUnionMember(int id, Employee e)
+		{
+			unionMembers[id] = e;
+		}
+
+		public static Employee GetUnionMember(int id)
+		{
+			return unionMembers[id] as Employee;
+		}
+
+		public static void RemoveUnionMember(int memberId)
+		{
+			unionMembers.Remove(memberId);
+		}
+
+		public static ArrayList GetAllEmployeeIds()
+		{
+			return new ArrayList(employees.Keys);
+		}
+	}
+}using System;
+using NUnit.Framework;
+
+namespace Payroll
+{
+	[TestFixture]
+	public class PayrollTest
+	{
+		[Test]
+		public void TestAddSalariedEmployee()
+		{
+			int empId = 1;
+			AddSalariedEmployee t =
+				new AddSalariedEmployee(empId, "Bob", "Home", 1000.00);
+			t.Execute();
+
+			Employee e = PayrollDatabase.GetEmployee(empId);
+			Assert.AreEqual("Bob", e.Name);
+
+			PaymentClassification pc = e.Classification;
+			Assert.IsTrue(pc is SalariedClassification);
+			SalariedClassification sc = pc as SalariedClassification;
+
+			Assert.AreEqual(1000.00, sc.Salary, .001);
+			PaymentSchedule ps = e.Schedule;
+			Assert.IsTrue(ps is MonthlySchedule);
+
+			PaymentMethod pm = e.Method;
+			Assert.IsTrue(pm is HoldMethod);
+		}
+
+		[Test]
+		public void TestAddHourlyEmployee()
+		{
+			int empId = 2;
+			AddHourlyEmployee t =
+				new AddHourlyEmployee(empId, "Micah", "Home", 200.00);
+			t.Execute();
+
+			Employee e = PayrollDatabase.GetEmployee(empId);
+			Assert.AreEqual("Micah", e.Name);
+
+			PaymentClassification pc = e.Classification;
+			Assert.IsTrue(pc is HourlyClassification);
+			HourlyClassification hc = pc as HourlyClassification;
+
+			Assert.AreEqual(200.00, hc.HourlyRate, .001);
+			PaymentSchedule ps = e.Schedule;
+			Assert.IsTrue(ps is WeeklySchedule);
+
+			PaymentMethod pm = e.Method;
+			Assert.IsTrue(pm is HoldMethod);
+		}
+
+		[Test]
+		public void TestAddCommissionedEmployee()
+		{
+			int empId = 3;
+			AddCommissionedEmployee t =
+				new AddCommissionedEmployee(empId, "Justin", "Home", 2500, 9.5);
+			t.Execute();
+
+			Employee e = PayrollDatabase.GetEmployee(empId);
+			Assert.AreEqual("Justin", e.Name);
+
+			PaymentClassification pc = e.Classification;
+			Assert.IsTrue(pc is CommissionClassification);
+			CommissionClassification cc = pc as CommissionClassification;
+
+			Assert.AreEqual(2500, cc.BaseRate, .001);
+			Assert.AreEqual(9.5, cc.CommissionRate, .001);
+			PaymentSchedule ps = e.Schedule;
+			Assert.IsTrue(ps is BiWeeklySchedule);
+
+			PaymentMethod pm = e.Method;
+			Assert.IsTrue(pm is HoldMethod);
+		}
+
+		[Test]
+		public void DeleteEmplyee()
+		{
+			int empId = 4;
+			AddCommissionedEmployee t =
+				new AddCommissionedEmployee(
+					empId, "Bill", "Home", 2500, 3.2);
+			t.Execute();
+
+			Employee e = PayrollDatabase.GetEmployee(empId);
+			Assert.IsNotNull(e);
+
+			DeleteEmployeeTransaction dt =
+				new DeleteEmployeeTransaction(empId);
+			dt.Execute();
+
+			e = PayrollDatabase.GetEmployee(empId);
+			Assert.IsNull(e);
+		}
+
+		[Test]
+		public void TestTimeCardTransaction()
+		{
+			int empId = 5;
+			AddHourlyEmployee t =
+				new AddHourlyEmployee(empId, "Bill", "Home", 15.25);
+			t.Execute();
+			TimeCardTransaction tct =
+				new TimeCardTransaction(
+					new DateTime(2005, 7, 31), 8.0, empId);
+			tct.Execute();
+
+			Employee e = PayrollDatabase.GetEmployee(empId);
+			Assert.IsNotNull(e);
+
+			PaymentClassification pc = e.Classification;
+			Assert.IsTrue(pc is HourlyClassification);
+			HourlyClassification hc = pc as HourlyClassification;
+
+			TimeCard tc = hc.GetTimeCard(new DateTime(2005, 7, 31));
+			Assert.IsNotNull(tc);
+			Assert.AreEqual(8.0, tc.Hours);
+		}
+
+		[Test]
+		public void TestSalesReceiptTransaction()
+		{
+			int empId = 5;
+			AddCommissionedEmployee t =
+				new AddCommissionedEmployee(
+					empId, "Bill", "Home", 2000, 15.25);
+			t.Execute();
+			SalesReceiptTransaction tct =
+				new SalesReceiptTransaction(
+					new DateTime(2005, 7, 31), 250.00, empId);
+			tct.Execute();
+
+			Employee e = PayrollDatabase.GetEmployee(empId);
+			Assert.IsNotNull(e);
+
+			PaymentClassification pc = e.Classification;
+			Assert.IsTrue(pc is CommissionClassification);
+			CommissionClassification cc = pc as CommissionClassification;
+
+			SalesReceipt sr = cc.GetSalesReceipt(new DateTime(2005, 7, 31));
+			Assert.IsNotNull(sr);
+			Assert.AreEqual(250.00, sr.SaleAmount, .001);
+		}
+
+		[Test]
+		public void AddServiceCharge()
+		{
+			int empId = 2;
+			AddHourlyEmployee t = new AddHourlyEmployee(
+				empId, "Bill", "Home", 15.25);
+			t.Execute();
+			Employee e = PayrollDatabase.GetEmployee(empId);
+			Assert.IsNotNull(e);
+			UnionAffiliation af = new UnionAffiliation();
+			e.Affiliation = af;
+			int memberId = 86; // Maxwell Smart
+			PayrollDatabase.AddUnionMember(memberId, e);
+			ServiceChargeTransaction sct =
+				new ServiceChargeTransaction(
+					memberId, new DateTime(2005, 8, 8), 12.95);
+			sct.Execute();
+			ServiceCharge sc =
+				af.GetServiceCharge(new DateTime(2005, 8, 8));
+			Assert.IsNotNull(sc);
+			Assert.AreEqual(12.95, sc.Amount, .001);
+		}
+
+		[Test]
+		public void TestChangeNameTransaction()
+		{
+			int empId = 2;
+			AddHourlyEmployee t = new AddHourlyEmployee(empId, "Bill", "Home", 15.25);
+			t.Execute();
+			ChangeNameTransaction cnt = new ChangeNameTransaction(empId, "Bob");
+			cnt.Execute();
+			Employee e = PayrollDatabase.GetEmployee(empId);
+			Assert.IsNotNull(e);
+			Assert.AreEqual("Bob", e.Name);
+		}
+
+		[Test]
+		public void TestChangeHourlyTransaction()
+		{
+			int empId = 3;
+			AddCommissionedEmployee t =
+				new AddCommissionedEmployee(
+					empId, "Lance", "Home", 2500, 3.2);
+			t.Execute();
+			ChangeHourlyTransaction cht =
+				new ChangeHourlyTransaction(empId, 27.52);
+			cht.Execute();
+			Employee e = PayrollDatabase.GetEmployee(empId);
+			Assert.IsNotNull(e);
+			PaymentClassification pc = e.Classification;
+			Assert.IsNotNull(pc);
+			Assert.IsTrue(pc is HourlyClassification);
+			HourlyClassification hc = pc as HourlyClassification;
+			Assert.AreEqual(27.52, hc.HourlyRate, .001);
+			PaymentSchedule ps = e.Schedule;
+			Assert.IsTrue(ps is WeeklySchedule);
+		}
+
+		[Test]
+		public void TestChangeSalaryTransaction()
+		{
+			int empId = 4;
+			AddCommissionedEmployee t =
+				new AddCommissionedEmployee(
+					empId, "Lance", "Home", 2500, 3.2);
+			t.Execute();
+			ChangeSalariedTransaction cst =
+				new ChangeSalariedTransaction(empId, 3000.00);
+			cst.Execute();
+			Employee e = PayrollDatabase.GetEmployee(empId);
+			Assert.IsNotNull(e);
+			PaymentClassification pc = e.Classification;
+			Assert.IsNotNull(pc);
+			Assert.IsTrue(pc is SalariedClassification);
+			SalariedClassification sc = pc as SalariedClassification;
+			Assert.AreEqual(3000.00, sc.Salary, .001);
+			PaymentSchedule ps = e.Schedule;
+			Assert.IsTrue(ps is MonthlySchedule);
+		}
+
+		[Test]
+		public void TestChangeCommisionTransaction()
+		{
+			int empId = 5;
+			AddSalariedEmployee t =
+				new AddSalariedEmployee(
+					empId, "Bob", "Home", 2500.00);
+			t.Execute();
+			ChangeCommissionedTransaction cht =
+				new ChangeCommissionedTransaction(empId, 1250.00, 5.6);
+			cht.Execute();
+			Employee e = PayrollDatabase.GetEmployee(empId);
+			Assert.IsNotNull(e);
+			PaymentClassification pc = e.Classification;
+			Assert.IsNotNull(pc);
+			Assert.IsTrue(pc is CommissionClassification);
+			CommissionClassification cc = pc as CommissionClassification;
+			Assert.AreEqual(1250.00, cc.BaseRate, .001);
+			Assert.AreEqual(5.6, cc.CommissionRate, .001);
+			PaymentSchedule ps = e.Schedule;
+			Assert.IsTrue(ps is BiWeeklySchedule);
+		}
+
+		[Test]
+		public void ChangeDirectMethod()
+		{
+			int empId = 6;
+			AddSalariedEmployee t =
+				new AddSalariedEmployee(
+					empId, "Mike", "Home", 3500.00);
+			t.Execute();
+			ChangeDirectTransaction cddt =
+				new ChangeDirectTransaction(empId);
+			cddt.Execute();
+			Employee e = PayrollDatabase.GetEmployee(empId);
+			Assert.IsNotNull(e);
+			PaymentMethod method = e.Method;
+			Assert.IsNotNull(method);
+			Assert.IsTrue(method is DirectDepositMethod);
+		}
+
+		[Test]
+		public void ChangeHoldMethod()
+		{
+			int empId = 7;
+			AddSalariedEmployee t =
+				new AddSalariedEmployee(
+					empId, "Mike", "Home", 3500.00);
+			t.Execute();
+			new ChangeDirectTransaction(empId).Execute();
+			ChangeHoldTransaction cht =
+				new ChangeHoldTransaction(empId);
+			cht.Execute();
+			Employee e = PayrollDatabase.GetEmployee(empId);
+			Assert.IsNotNull(e);
+			PaymentMethod method = e.Method;
+			Assert.IsNotNull(method);
+			Assert.IsTrue(method is HoldMethod);
+		}
+
+		[Test]
+		public void ChangeMailMethod()
+		{
+			int empId = 8;
+			AddSalariedEmployee t =
+				new AddSalariedEmployee(
+					empId, "Mike", "Home", 3500.00);
+			t.Execute();
+			ChangeMailTransaction cmt =
+				new ChangeMailTransaction(empId);
+			cmt.Execute();
+			Employee e = PayrollDatabase.GetEmployee(empId);
+			Assert.IsNotNull(e);
+			PaymentMethod method = e.Method;
+			Assert.IsNotNull(method);
+			Assert.IsTrue(method is MailMethod);
+		}
+
+		[Test]
+		public void ChangeUnionMember()
+		{
+			int empId = 9;
+			AddHourlyEmployee t =
+				new AddHourlyEmployee(empId, "Bill", "Home", 15.25);
+			t.Execute();
+			int memberId = 7743;
+			ChangeMemberTransaction cmt =
+				new ChangeMemberTransaction(empId, memberId, 99.42);
+			cmt.Execute();
+			Employee e = PayrollDatabase.GetEmployee(empId);
+			Assert.IsNotNull(e);
+			Affiliation affiliation = e.Affiliation;
+			Assert.IsNotNull(affiliation);
+			Assert.IsTrue(affiliation is UnionAffiliation);
+			UnionAffiliation uf = affiliation as UnionAffiliation;
+			Assert.AreEqual(99.42, uf.Dues, .001);
+			Employee member = PayrollDatabase.GetUnionMember(memberId);
+			Assert.IsNotNull(member);
+			Assert.AreEqual(e, member);
+		}
+
+		[Test]
+		public void ChangeUnaffiliatedMember()
+		{
+			int empId = 10;
+			AddHourlyEmployee t =
+				new AddHourlyEmployee(empId, "Bill", "Home", 15.25);
+			t.Execute();
+			int memberId = 7743;
+			new ChangeMemberTransaction(empId, memberId, 99.42).Execute();
+			ChangeUnaffiliatedTransaction cut =
+				new ChangeUnaffiliatedTransaction(empId);
+			cut.Execute();
+			Employee e = PayrollDatabase.GetEmployee(empId);
+			Assert.IsNotNull(e);
+			Affiliation affiliation = e.Affiliation;
+			Assert.IsNotNull(affiliation);
+			Assert.IsTrue(affiliation is NoAffiliation);
+			Employee member = PayrollDatabase.GetUnionMember(memberId);
+			Assert.IsNull(member);
+		}
+
+		[Test]
+		public void PaySingleSalariedEmployee()
+		{
+			int empId = 1;
+			AddSalariedEmployee t = new AddSalariedEmployee(
+				empId, "Bob", "Home", 1000.00);
+			t.Execute();
+			DateTime payDate = new DateTime(2001, 11, 30);
+			PaydayTransaction pt = new PaydayTransaction(payDate);
+			pt.Execute();
+			Paycheck pc = pt.GetPaycheck(empId);
+			Assert.IsNotNull(pc);
+			Assert.AreEqual(payDate, pc.PayDate);
+			Assert.AreEqual(1000.00, pc.GrossPay, .001);
+			Assert.AreEqual("Hold", pc.GetField("Disposition"));
+			Assert.AreEqual(0.0, pc.Deductions, .001);
+			Assert.AreEqual(1000.00, pc.NetPay, .001);
+		}
+
+		[Test]
+		public void PaySingleSalariedEmployeeOnWrongDate()
+		{
+			int empId = 1;
+			AddSalariedEmployee t = new AddSalariedEmployee(
+				empId, "Bob", "Home", 1000.00);
+			t.Execute();
+			DateTime payDate = new DateTime(2001, 11, 29);
+			PaydayTransaction pt = new PaydayTransaction(payDate);
+			pt.Execute();
+			Paycheck pc = pt.GetPaycheck(empId);
+			Assert.IsNull(pc);
+		}
+
+		[Test]
+		public void PayingSingleHourlyEmployeeNoTimeCards()
+		{
+			int empId = 2;
+			AddHourlyEmployee t = new AddHourlyEmployee(
+				empId, "Bill", "Home", 15.25);
+			t.Execute();
+			DateTime payDate = new DateTime(2001, 11, 9); // Friday
+			PaydayTransaction pt = new PaydayTransaction(payDate);
+			pt.Execute();
+			ValidatePaycheck(pt, empId, payDate, 0.0);
+		}
+
+		private void ValidatePaycheck(PaydayTransaction pt,
+		                              int empid, DateTime payDate, double pay)
+		{
+			Paycheck pc = pt.GetPaycheck(empid);
+			Assert.IsNotNull(pc);
+			Assert.AreEqual(payDate, pc.PayDate);
+			Assert.AreEqual(pay, pc.GrossPay, .001);
+			Assert.AreEqual("Hold", pc.GetField("Disposition"));
+			Assert.AreEqual(0.0, pc.Deductions, .001);
+			Assert.AreEqual(pay, pc.NetPay, .001);
+		}
+
+		[Test]
+		public void PaySingleHourlyEmployeeOneTimeCard()
+		{
+			int empId = 2;
+			AddHourlyEmployee t = new AddHourlyEmployee(
+				empId, "Bill", "Home", 15.25);
+			t.Execute();
+			DateTime payDate = new DateTime(2001, 11, 9); // Friday
+
+			TimeCardTransaction tc =
+				new TimeCardTransaction(payDate, 2.0, empId);
+			tc.Execute();
+			PaydayTransaction pt = new PaydayTransaction(payDate);
+			pt.Execute();
+			ValidatePaycheck(pt, empId, payDate, 30.5);
+		}
+
+		[Test]
+		public void PaySingleHourlyEmployeeOvertimeOneTimeCard()
+		{
+			int empId = 2;
+			AddHourlyEmployee t = new AddHourlyEmployee(
+				empId, "Bill", "Home", 15.25);
+			t.Execute();
+			DateTime payDate = new DateTime(2001, 11, 9); // Friday
+
+			TimeCardTransaction tc =
+				new TimeCardTransaction(payDate, 9.0, empId);
+			tc.Execute();
+			PaydayTransaction pt = new PaydayTransaction(payDate);
+			pt.Execute();
+			ValidatePaycheck(pt, empId, payDate, (8 + 1.5)*15.25);
+		}
+
+		[Test]
+		public void PaySingleHourlyEmployeeOnWrongDate()
+		{
+			int empId = 2;
+			AddHourlyEmployee t = new AddHourlyEmployee(
+				empId, "Bill", "Home", 15.25);
+			t.Execute();
+			DateTime payDate = new DateTime(2001, 11, 8); // Thursday
+
+			TimeCardTransaction tc =
+				new TimeCardTransaction(payDate, 9.0, empId);
+			tc.Execute();
+			PaydayTransaction pt = new PaydayTransaction(payDate);
+			pt.Execute();
+
+			Paycheck pc = pt.GetPaycheck(empId);
+			Assert.IsNull(pc);
+		}
+
+		[Test]
+		public void PaySingleHourlyEmployeeTwoTimeCards()
+		{
+			int empId = 2;
+			AddHourlyEmployee t = new AddHourlyEmployee(
+				empId, "Bill", "Home", 15.25);
+			t.Execute();
+			DateTime payDate = new DateTime(2001, 11, 9); // Friday
+
+			TimeCardTransaction tc =
+				new TimeCardTransaction(payDate, 2.0, empId);
+			tc.Execute();
+			TimeCardTransaction tc2 =
+				new TimeCardTransaction(payDate.AddDays(-1), 5.0, empId);
+			tc2.Execute();
+			PaydayTransaction pt = new PaydayTransaction(payDate);
+			pt.Execute();
+			ValidatePaycheck(pt, empId, payDate, 7*15.25);
+		}
+
+		[Test]
+		public void
+			TestPaySingleHourlyEmployeeWithTimeCardsSpanningTwoPayPeriods()
+		{
+			int empId = 2;
+			AddHourlyEmployee t = new AddHourlyEmployee(
+				empId, "Bill", "Home", 15.25);
+			t.Execute();
+			DateTime payDate = new DateTime(2001, 11, 9); // Friday
+			DateTime dateInPreviousPayPeriod =
+				new DateTime(2001, 10, 30);
+
+			TimeCardTransaction tc =
+				new TimeCardTransaction(payDate, 2.0, empId);
+			tc.Execute();
+			TimeCardTransaction tc2 = new TimeCardTransaction(
+				dateInPreviousPayPeriod, 5.0, empId);
+			tc2.Execute();
+			PaydayTransaction pt = new PaydayTransaction(payDate);
+			pt.Execute();
+			ValidatePaycheck(pt, empId, payDate, 2*15.25);
+		}
+
+		[Test]
+		public void PayingSingleCommissionedEmployeeNoReceipts()
+		{
+			int empId = 2;
+			AddCommissionedEmployee t = new AddCommissionedEmployee(
+				empId, "Bill", "Home", 1500, 10);
+			t.Execute();
+			DateTime payDate = new DateTime(2001, 11, 16); // Payday
+			PaydayTransaction pt = new PaydayTransaction(payDate);
+			pt.Execute();
+			ValidatePaycheck(pt, empId, payDate, 1500.0);
+		}
+
+		[Test]
+		public void PaySingleCommissionedEmployeeOneReceipt()
+		{
+			int empId = 2;
+			AddCommissionedEmployee t = new AddCommissionedEmployee(
+				empId, "Bill", "Home", 1500, 10);
+			t.Execute();
+			DateTime payDate = new DateTime(2001, 11, 16); // Payday
+
+			SalesReceiptTransaction sr =
+				new SalesReceiptTransaction(payDate, 5000.00, empId);
+			sr.Execute();
+			PaydayTransaction pt = new PaydayTransaction(payDate);
+			pt.Execute();
+			ValidatePaycheck(pt, empId, payDate, 2000.00);
+		}
+
+		[Test]
+		public void PaySingleCommissionedEmployeeOnWrongDate()
+		{
+			int empId = 2;
+			AddCommissionedEmployee t = new AddCommissionedEmployee(
+				empId, "Bill", "Home", 1500, 10);
+			t.Execute();
+			DateTime payDate = new DateTime(2001, 11, 9); // wrong friday
+
+			SalesReceiptTransaction sr =
+				new SalesReceiptTransaction(payDate, 5000.00, empId);
+			sr.Execute();
+			PaydayTransaction pt = new PaydayTransaction(payDate);
+			pt.Execute();
+
+			Paycheck pc = pt.GetPaycheck(empId);
+			Assert.IsNull(pc);
+		}
+
+		[Test]
+		public void PaySingleCommissionedEmployeeTwoReceipts()
+		{
+			int empId = 2;
+			AddCommissionedEmployee t = new AddCommissionedEmployee(
+				empId, "Bill", "Home", 1500, 10);
+			t.Execute();
+			DateTime payDate = new DateTime(2001, 11, 16); // Payday
+
+			SalesReceiptTransaction sr =
+				new SalesReceiptTransaction(payDate, 5000.00, empId);
+			sr.Execute();
+			SalesReceiptTransaction sr2 = new SalesReceiptTransaction(
+				payDate.AddDays(-1), 3500.00, empId);
+			sr2.Execute();
+			PaydayTransaction pt = new PaydayTransaction(payDate);
+			pt.Execute();
+			ValidatePaycheck(pt, empId, payDate, 2350.00);
+		}
+
+		[Test]
+		public void
+			TestPaySingleCommissionedEmployeeWithReceiptsSpanningTwoPayPeriods()
+		{
+			int empId = 2;
+			AddCommissionedEmployee t = new AddCommissionedEmployee(
+				empId, "Bill", "Home", 1500, 10);
+			t.Execute();
+			DateTime payDate = new DateTime(2001, 11, 16); // Payday
+
+			SalesReceiptTransaction sr =
+				new SalesReceiptTransaction(payDate, 5000.00, empId);
+			sr.Execute();
+			SalesReceiptTransaction sr2 = new SalesReceiptTransaction(
+				payDate.AddDays(-15), 3500.00, empId);
+			sr2.Execute();
+			PaydayTransaction pt = new PaydayTransaction(payDate);
+			pt.Execute();
+			ValidatePaycheck(pt, empId, payDate, 2000.00);
+		}
+
+		[Test]
+		public void SalariedUnionMemberDues()
+		{
+			int empId = 1;
+			AddSalariedEmployee t = new AddSalariedEmployee(
+				empId, "Bob", "Home", 1000.00);
+			t.Execute();
+			int memberId = 7734;
+			ChangeMemberTransaction cmt =
+				new ChangeMemberTransaction(empId, memberId, 9.42);
+			cmt.Execute();
+			DateTime payDate = new DateTime(2001, 11, 30);
+			PaydayTransaction pt = new PaydayTransaction(payDate);
+			pt.Execute();
+			Paycheck pc = pt.GetPaycheck(empId);
+			Assert.IsNotNull(pc);
+			Assert.AreEqual(payDate, pc.PayDate);
+			Assert.AreEqual(1000.0, pc.GrossPay, .001);
+			Assert.AreEqual("Hold", pc.GetField("Disposition"));
+			Assert.AreEqual(47.1, pc.Deductions, .001);
+			Assert.AreEqual(1000.0 - 47.1, pc.NetPay, .001);
+		}
+
+		[Test]
+		public void HourlyUnionMemberServiceCharge()
+		{
+			int empId = 1;
+			AddHourlyEmployee t = new AddHourlyEmployee(
+				empId, "Bill", "Home", 15.24);
+			t.Execute();
+			int memberId = 7734;
+			ChangeMemberTransaction cmt =
+				new ChangeMemberTransaction(empId, memberId, 9.42);
+			cmt.Execute();
+			DateTime payDate = new DateTime(2001, 11, 9);
+			ServiceChargeTransaction sct =
+				new ServiceChargeTransaction(memberId, payDate, 19.42);
+			sct.Execute();
+			TimeCardTransaction tct =
+				new TimeCardTransaction(payDate, 8.0, empId);
+			tct.Execute();
+			PaydayTransaction pt = new PaydayTransaction(payDate);
+			pt.Execute();
+			Paycheck pc = pt.GetPaycheck(empId);
+			Assert.IsNotNull(pc);
+			Assert.AreEqual(payDate, pc.PayPeriodEndDate);
+			Assert.AreEqual(8*15.24, pc.GrossPay, .001);
+			Assert.AreEqual("Hold", pc.GetField("Disposition"));
+			Assert.AreEqual(9.42 + 19.42, pc.Deductions, .001);
+			Assert.AreEqual((8*15.24) - (9.42 + 19.42), pc.NetPay, .001);
+		}
+
+		[Test]
+		public void ServiceChargesSpanningMultiplePayPeriods()
+		{
+			int empId = 1;
+			AddHourlyEmployee t = new AddHourlyEmployee(
+				empId, "Bill", "Home", 15.24);
+			t.Execute();
+			int memberId = 7734;
+			ChangeMemberTransaction cmt = 
+				new ChangeMemberTransaction(empId, memberId, 9.42);
+			cmt.Execute();
+			DateTime payDate = new DateTime(2001, 11, 9);
+			DateTime earlyDate = 
+				new DateTime(2001, 11, 2); // previous Friday
+			DateTime lateDate = 
+				new DateTime(2001, 11, 16); // next Friday
+			ServiceChargeTransaction sct = 
+				new ServiceChargeTransaction(memberId, payDate, 19.42);
+			sct.Execute();
+			ServiceChargeTransaction sctEarly = 
+				new ServiceChargeTransaction(memberId, earlyDate, 100.00);
+			sctEarly.Execute();
+			ServiceChargeTransaction sctLate = 
+				new ServiceChargeTransaction(memberId, lateDate, 200.00);
+			sctLate.Execute();
+			TimeCardTransaction tct = 
+				new TimeCardTransaction(payDate, 8.0, empId);
+			tct.Execute();
+			PaydayTransaction pt = new PaydayTransaction(payDate);
+			pt.Execute();
+			Paycheck pc = pt.GetPaycheck(empId);
+			Assert.IsNotNull(pc);
+			Assert.AreEqual(payDate, pc.PayPeriodEndDate);
+			Assert.AreEqual(8*15.24, pc.GrossPay, .001);
+			Assert.AreEqual("Hold", pc.GetField("Disposition"));
+			Assert.AreEqual(9.42 + 19.42, pc.Deductions, .001);
+			Assert.AreEqual((8*15.24) - (9.42 + 19.42), pc.NetPay, .001);
+		}
+	}
+}namespace Payroll
+{
+	public class SalariedClassification : PaymentClassification
+	{
+		private readonly double salary;
+
+		public SalariedClassification(double salary)
+		{
+			this.salary = salary;
+		}
+
+		public double Salary
+		{
+			get { return salary; }
+		}
+
+		public override double CalculatePay(Paycheck paycheck)
+		{
+			return salary;
+		}
+	}
+}using System;
+
+namespace Payroll
+{
+	public class SalesReceipt
+	{
+		private readonly DateTime date;
+		private readonly double saleAmount;
+
+		public SalesReceipt(DateTime date, double amount)
+		{
+			this.date = date;
+			this.saleAmount = amount;
+		}
+
+		public DateTime Date
+		{
+			get { return date; }
+		}
+
+		public double SaleAmount
+		{
+			get { return saleAmount; }
+		}
+	}
+}using System;
+
+namespace Payroll
+{
+	public class SalesReceiptTransaction : Transaction
+	{
+		private readonly DateTime date;
+		private readonly double saleAmount;
+		private readonly int empId;
+
+		public SalesReceiptTransaction(
+			DateTime time, double saleAmount, int empId)
+		{
+			this.date = time;
+			this.saleAmount = saleAmount;
+			this.empId = empId;
+		}
+
+		public void Execute()
+		{
+			Employee e = PayrollDatabase.GetEmployee(empId);
+
+			if (e != null)
+			{
+				CommissionClassification hc =
+					e.Classification as CommissionClassification;
+
+				if (hc != null)
+					hc.AddSalesReceipt(new SalesReceipt(date, saleAmount));
+				else
+					throw new ApplicationException(
+						"Tried to add sales receipt to" +
+							"non-commissioned employee");
+			}
+			else
+				throw new ApplicationException(
+					"No such employee.");
+
+		}
+	}
+}using System;
+
+namespace Payroll
+{
+	public class ServiceCharge
+	{
+		private readonly DateTime time;
+		private readonly double amount;
+
+		public ServiceCharge(DateTime time, double amount)
+		{
+			this.time = time;
+			this.amount = amount;
+		}
+
+		public double Amount
+		{
+			get { return amount; }
+		}
+
+		public DateTime Time
+		{
+			get { return time; }
+		}
+
+	}
+}using System;
+
+namespace Payroll
+{
+	public class ServiceChargeTransaction : Transaction
+	{
+		private readonly int memberId;
+		private readonly DateTime time;
+		private readonly double charge;
+
+		public ServiceChargeTransaction(
+			int id, DateTime time, double charge)
+		{
+			this.memberId = id;
+			this.time = time;
+			this.charge = charge;
+		}
+
+		public void Execute()
+		{
+			Employee e = PayrollDatabase.GetUnionMember(memberId);
+
+			if (e != null)
+			{
+				UnionAffiliation ua = null;
+				if(e.Affiliation is UnionAffiliation)
+					ua = e.Affiliation as UnionAffiliation;
+
+				if (ua != null)
+					ua.AddServiceCharge(
+						new ServiceCharge(time, charge));
+				else
+					throw new ApplicationException(
+						"Tries to add service charge to union"
+						+ "member without a union affiliation");
+			}
+			else
+				throw new ApplicationException(
+					"No such union member.");
+		}
+	}
+}using System;
+
+namespace Payroll
+{
+	public class TimeCard
+	{
+		private readonly DateTime date;
+		private readonly double hours;
+
+		public TimeCard(DateTime date, double hours)
+		{
+			this.date = date;
+			this.hours = hours;
+		}
+
+		public double Hours
+		{
+			get { return hours; }
+		}
+
+		public DateTime Date
+		{
+			get { return date; }
+		}
+	}
+}using System;
+
+namespace Payroll
+{
+	public class TimeCardTransaction : Transaction
+	{
+		private readonly DateTime date;
+		private readonly double hours;
+		private readonly int empId;
+
+		public TimeCardTransaction(
+			DateTime date, double hours, int empId)
+		{
+			this.date = date;
+			this.hours = hours;
+			this.empId = empId;
+		}
+
+		public void Execute()
+		{
+			Employee e = PayrollDatabase.GetEmployee(empId);
+
+			if (e != null)
+			{
+				HourlyClassification hc =
+					e.Classification as HourlyClassification;
+
+				if (hc != null)
+					hc.AddTimeCard(new TimeCard(date, hours));
+				else
+					throw new ApplicationException(
+						"Tried to add timecard to" +
+							"non-hourly employee");
+			}
+			else
+				throw new ApplicationException(
+					"No such employee.");
+		}
+	}
+}namespace Payroll
+{
+	public interface Transaction
+	{
+		void Execute();
+	}
+}using System;
+using System.Collections;
+
+namespace Payroll
+{
+	public class UnionAffiliation : Affiliation
+	{
+		private Hashtable charges = new Hashtable();
+		private int memberId;
+		private readonly double dues;
+
+		public UnionAffiliation(int memberId, double dues)
+		{
+			this.memberId = memberId;
+			this.dues = dues;
+		}
+
+		public UnionAffiliation()
+			: this(-1, 0.0)
+		{}
+
+		public ServiceCharge GetServiceCharge(DateTime time)
+		{
+			return charges[time] as ServiceCharge;
+		}
+
+		public void AddServiceCharge(ServiceCharge sc)
+		{
+			charges[sc.Time] = sc;
+		}
+
+		public double Dues
+		{
+			get { return dues;	}
+		}
+
+		public int MemberId
+		{
+			get { return memberId; }
+		}
+
+		public double CalculateDeductions(Paycheck paycheck)
+		{
+			double totalDues = 0;
+
+			int fridays = NumberOfFridaysInPayPeriod(
+				paycheck.PayPeriodStartDate, paycheck.PayPeriodEndDate);
+			totalDues = dues * fridays;
+
+			foreach(ServiceCharge charge in charges.Values)
+			{
+				if(DateUtil.IsInPayPeriod(charge.Time,
+					paycheck.PayPeriodStartDate,
+					paycheck.PayPeriodEndDate))
+				totalDues += charge.Amount;
+			}
+
+			return totalDues;
+		}
+ 
+		private int NumberOfFridaysInPayPeriod(
+			DateTime payPeriodStart, DateTime payPeriodEnd)
+		{
+			int fridays = 0;
+			for (DateTime day = payPeriodStart; 
+				day <= payPeriodEnd; day = day.AddDays(1)) 
+			{
+				if (day.DayOfWeek == DayOfWeek.Friday)
+					fridays++;
+			}
+			return fridays;
+		}
+	}
+} using System;
+
+namespace Payroll
+{
+	public class WeeklySchedule : PaymentSchedule
+	{
+		public bool IsPayDate(DateTime payDate)
+		{
+			return payDate.DayOfWeek == DayOfWeek.Friday;
+		}
+
+		public DateTime GetPayPeriodStartDate(DateTime date)
+		{
+			return date.AddDays(-6);
+		}
+
+	}
+}

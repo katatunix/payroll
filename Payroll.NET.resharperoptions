@@ -1,0 +1,212 @@
+<Configuration>
+  <CompletionStatisticsManager>
+    <ItemStatistics item="Qualified:Payroll.Paycheck">
+      <Item value="PayPeriodEndDate" priority="2" />
+      <Item value="PayPeriodStartDate" priority="3" />
+      <Item value="PayDate" priority="1" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:PayrollDB.LoadPaymentMethodOperation">
+      <Item value="Execute" priority="0" />
+      <Item value="Method" priority="0" />
+      <Item value="Prepare" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:System.Data.DataSet">
+      <Item value="Tables" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:Payroll.DirectDepositMethod">
+      <Item value="Bank" priority="2" />
+      <Item value="AccountNumber" priority="1" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:PayrollUI.MockPayrollView">
+      <Item value="employeesText" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:PayrollUI.MockAddEmployeeView">
+      <Item value="submitEnabled" priority="2" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:System.Data.SqlClient.SqlDataAdapter">
+      <Item value="Fill" priority="1" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:System.Windows.Forms.Button">
+      <Item value="Enabled" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:System.Web.UI.HtmlTextWriter">
+      <Item value="Write" priority="2" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:Payroll.MailMethod">
+      <Item value="Address" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:System.Data.SqlClient.SqlParameterCollection">
+      <Item value="Add" priority="9" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:Payroll.TimeCard">
+      <Item value="Date" priority="2" />
+      <Item value="Hours" priority="2" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:Payroll.PaymentSchedule">
+      <Item value="GetType" priority="0" />
+      <Item value="IsPayDate" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:PayrollUI.AddEmployeeWindow">
+      <Item value="SubmitEnabled" priority="0" />
+      <Item value="salaryRadioButton" priority="0" />
+      <Item value="commissionSalaryTextBox" priority="0" />
+      <Item value="commissionRadioButton" priority="0" />
+      <Item value="commissionTextBox" priority="0" />
+      <Item value="salaryTextBox" priority="0" />
+      <Item value="Visible" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:System.Windows.Forms.RadioButton">
+      <Item value="Checked" priority="5" />
+      <Item value="PerformClick" priority="2" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:Payroll.PaymentClassification">
+      <Item value="GetType" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:@System.DayOfWeek">
+      <Item value="Friday" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:System.Data.DataColumnCollection">
+      <Item value="Add" priority="2" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:System.Data.DataTable">
+      <Item value="NewRow" priority="1" />
+      <Item value="Rows" priority="8" />
+      <Item value="Columns" priority="4" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:System.Collections.Hashtable">
+      <Item value="Values" priority="2" />
+      <Item value="Clear" priority="1" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:PayrollDB.LoadPaymentClassificationOperation">
+      <Item value="Classification" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:System.Data.DataRowCollection">
+      <Item value="Add" priority="1" />
+      <Item value="Count" priority="3" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:Payroll.SalariedClassification">
+      <Item value="Salary" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:System.Windows.Forms.TextBox">
+      <Item value="Text" priority="2" />
+      <Item value="Enabled" priority="4" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:string">
+      <Item value="Equals" priority="4" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:@">
+      <Item value="Split" priority="0" />
+      <Item value="Rows" priority="0" />
+      <Item value="Connection" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:Payroll.ServiceCharge">
+      <Item value="Amount" priority="0" />
+      <Item value="Time" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:@Payroll.PayrollDatabase.unionMembers">
+      <Item value="Remove" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:System.Data.SqlClient.SqlConnection">
+      <Item value="Close" priority="3" />
+      <Item value="BeginTransaction" priority="0" />
+      <Item value="Open" priority="1" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:Payroll.PaymentMethod">
+      <Item value="GetType" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:Payroll.CommissionClassification">
+      <Item value="CommissionRate" priority="1" />
+      <Item value="BaseRate" priority="1" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:PayrollUI.TransactionContainer">
+      <Item value="Transactions" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:System.DateTime">
+      <Item value="Month" priority="1" />
+      <Item value="AddDays" priority="12" />
+      <Item value="Day" priority="0" />
+      <Item value="DayOfWeek" priority="1" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:System.Data.SqlClient.SqlTransaction">
+      <Item value="Rollback" priority="0" />
+      <Item value="Commit" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:Payroll.SalesReceipt">
+      <Item value="SaleAmount" priority="0" />
+      <Item value="Date" priority="4" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:Payroll.Employee">
+      <Item value="Method" priority="13" />
+      <Item value="EmpId" priority="3" />
+      <Item value="Classification" priority="6" />
+      <Item value="Name" priority="3" />
+      <Item value="Address" priority="4" />
+      <Item value="Affiliation" priority="2" />
+      <Item value="Schedule" priority="6" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:System.Collections.IList">
+      <Item value="Count" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:PayrollDB.SaveEmployeeOperation">
+      <Item value="Save" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:PayrollDB.LoadEmployeeOperation">
+      <Item value="Execute" priority="0" />
+      <Item value="Employee" priority="2" />
+      <Item value="Emplyee" priority="1" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:PayrollUI.AddEmployeePresenter">
+      <Item value="HourlyRateChanged" priority="1" />
+      <Item value="UseCommission" priority="0" />
+      <Item value="Address" priority="0" />
+      <Item value="CommissionSalaryChanged" priority="1" />
+      <Item value="HourlyRate" priority="1" />
+      <Item value="IsCommission" priority="1" />
+      <Item value="UseHourly" priority="1" />
+      <Item value="CommissionChanged" priority="0" />
+      <Item value="EmpId" priority="0" />
+      <Item value="SalaryChanged" priority="0" />
+      <Item value="Name" priority="0" />
+      <Item value="IdChanged" priority="1" />
+      <Item value="IsSalary" priority="1" />
+      <Item value="AddressChanged" priority="1" />
+      <Item value="UseSalary" priority="0" />
+      <Item value="NameChanged" priority="0" />
+      <Item value="Commission" priority="1" />
+      <Item value="IsHourly" priority="1" />
+      <Item value="CommissionSalary" priority="1" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:System.Data.SqlClient.SqlCommand">
+      <Item value="Parameters" priority="11" />
+      <Item value="Transaction" priority="1" />
+      <Item value="CommandText" priority="1" />
+      <Item value="ExecuteNonQuery" priority="2" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:PayrollDB.SqlPayrollDatabase">
+      <Item value="AddEmployee" priority="4" />
+      <Item value="GetEmployee" priority="0" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:System.Data.DataRow">
+      <Item value="ItemArray" priority="0" />
+    </ItemStatistics>
+  </CompletionStatisticsManager>
+  <RecentFilesTracker>
+    <RecentFilesTracker>
+      <TrackedFile location="C:\Payroll.NET\PayrollUI\PayrollPresenterTest.cs" offset="433" line="3" column="0" />
+      <TrackedFile location="C:\Payroll.NET\PayrollUI\PayrollPresenter.cs" offset="0" line="2" column="0" />
+      <TrackedFile location="C:\Payroll.NET\PayrollUI\MockTransaction.cs" offset="0" line="-1" column="-1" />
+      <TrackedFile location="C:\Payroll.NET\Payroll\InMemoryPayrollDatabase.cs" offset="0" line="14" column="0" />
+    </RecentFilesTracker>
+  </RecentFilesTracker>
+  <SettingsComponent>
+    <string />
+    <integer />
+    <boolean>
+      <setting name="ReSharper.FindInterfaceDialog.checkBoxExtendingInterfaces">False</setting>
+      <setting name="ReSharper.FindInterfaceDialog.checkBoxFindMemberUsages">False</setting>
+      <setting name="ReSharper.FindInterfaceDialog.checkBoxFindUsages">False</setting>
+      <setting name="ReSharper.FindInterfaceDialog.checkBoxSearchLibraries">False</setting>
+      <setting name="ReSharper.FindInterfaceDialog.checkBoxFindInheritors">True</setting>
+    </boolean>
+  </SettingsComponent>
+</Configuration>
